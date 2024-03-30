@@ -6,11 +6,12 @@ mod vga_buffer;
 use core::fmt::Write;
 use core::panic::PanicInfo;
 
-static HELLO:&[u8]=b"Hello World!";
 #[no_mangle]
 pub extern "C" fn _start()->!{
-    // println!("Hello World{}", "!");
-    panic!("some error");
+    for i in 1..5 {
+        println!("Hello World{}", i);
+    }
+    panic!("some");
 
     loop {}
 }
