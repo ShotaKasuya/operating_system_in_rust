@@ -1,14 +1,13 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(crate::test_runner)]
+#![test_runner(rust_os::test_runner)]
 #![reexport_test_harness_main="test_main"]
 
-mod vga_buffer;
 
-use core::fmt::Write;
 use core::panic::PanicInfo;
-use x86_64::instructions::port::Port;
+use rust_os::{println};
+
 
 #[no_mangle]
 pub extern "C" fn _start()->! {
@@ -20,34 +19,20 @@ pub extern "C" fn _start()->! {
     loop {}
 }
 
+#[cfg(not(test))]
 #[panic_handler]
-fn panic(_info: &PanicInfo)->!{
+fn panic(_info: &PanicInfo) -> ! {
     println!("{}", _info);
     loop {}
 }
 
 #[cfg(test)]
-pub fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} test", tests.len());
-    for test in tests {
-        test();
-    }
-
-    exit_qemu(QemuExitCode::Success);
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    rust_os::test_panic_handler(info);
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u32)]
-pub enum QemuExitCode {
-    Success = 0x10,
-    Failed = 0x11,
-}
-
-pub fn exit_qemu(exit_code: QemuExitCode) {
-    use x86_64::instructions::port::Port;
-
-    unsafe {
-        let mut port = Port::new(0xF4);
-        port.write(exit_code as u32);
-    }
+#[test_case]
+fn trivial_assertion() {
+    assert_eq!(1, 1);
 }
