@@ -14,6 +14,12 @@ pub extern "C" fn _start()->! {
     println!("Hello World{}", "!");
 
     rust_os::init();
+
+    // Page fault
+    unsafe {
+        *(0xdeadbeef as *mut u8) = 42;
+    }
+
     x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
