@@ -23,5 +23,5 @@ fn panic(_info: &PanicInfo) -> ! {
 
 fn should_fail() {
     serial_println!("should_panic::should_fail\t");
-    // assert_eq!(0, 1);
+    assert_eq!(0, 1);
 }
