@@ -19,27 +19,18 @@ pub extern "C" fn _start()->! {
     #[cfg(test)]
     test_main();
 
-    // Page fault
-    #[allow(unconditional_recursion)]
-    fn stack_overflow() {
-        stack_overflow();
-    }
-
-    stack_overflow();
-
-    x86_64::instructions::interrupts::int3();
-
     println!("It did not crash!");
 
-    loop {}
+    rust_os::hlt_loop();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     println!("{}", _info);
-    loop {}
+    rust_os::hlt_loop();
 }
+
 
 #[cfg(test)]
 #[panic_handler]
