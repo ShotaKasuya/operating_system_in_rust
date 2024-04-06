@@ -15,7 +15,12 @@ pub extern "C" fn _start()->! {
 
     rust_os::init();
 
+
+    #[cfg(test)]
+    test_main();
+
     // Page fault
+    #[allow(unconditional_recursion)]
     fn stack_overflow() {
         stack_overflow();
     }
@@ -23,9 +28,6 @@ pub extern "C" fn _start()->! {
     stack_overflow();
 
     x86_64::instructions::interrupts::int3();
-
-    #[cfg(test)]
-    test_main();
 
     println!("It did not crash!");
 
