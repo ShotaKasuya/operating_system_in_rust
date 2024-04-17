@@ -1,5 +1,4 @@
 use lazy_static::lazy_static;
-use pc_keyboard::ScancodeSet1;
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
@@ -44,9 +43,7 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    use x86_64::instructions::port::Port;
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
-    use spin::Mutex;
 
     lazy_static! {
         static ref KEYBORD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =

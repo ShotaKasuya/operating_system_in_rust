@@ -2,9 +2,11 @@
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
+#![feature(alloc_error_handler)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use core::alloc::Layout;
 #[cfg(test)]
 use bootloader::{entry_point, BootInfo};
 
@@ -18,11 +20,13 @@ fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
     hlt_loop();
 }
 
+extern crate alloc;
 pub mod vga_buffer;
 pub mod serial;
 pub mod interrupts;
 pub mod gdt;
 pub mod memory;
+pub mod allocator;
 
 use core::panic::PanicInfo;
 
@@ -76,6 +80,11 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info : &PanicInfo) -> ! {
     test_panic_handler(info)
+}
+
+#[alloc_error_handler]
+fn alloc_error_handler(layout: Layout) -> ! {
+    panic!("allocation error: {:?}", layout)
 }
 
 pub fn hlt_loop() -> ! {
