@@ -6,11 +6,16 @@ use x86_64::structures::paging::{FrameAllocator, Mapper, PageTableFlags, Size4Ki
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::VirtAddr;
 
+use self::bump::BumpAllocator;
+
+pub mod bump;
+
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;    // 100KiB
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+// static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
@@ -39,6 +44,29 @@ pub fn init_heap(
     }
 
     Ok(())
+}
+
+pub struct Locked<A> {
+    inner: spin::Mutex<A>,
+}
+
+impl<A> Locked<A> {
+    pub const fn new(inner: A)->Self{
+        Locked{
+            inner:spin::Mutex::new(inner)
+        }
+    }
+
+    pub fn lock(&self)->spin::MutexGuard<A> {
+        self.inner.lock()
+    }
+}
+
+/// 与えられた'addr'を'align'に上丸めする
+/// 'align'は2の累乗出なければならない
+/// https://os.phil-opp.com/allocator-designs/ja/
+fn align_up(addr: usize, align: usize) ->usize {
+    (addr+align-1) & !(align-1)
 }
 
 pub struct Dummy;
