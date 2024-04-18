@@ -7,6 +7,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::alloc::Layout;
+
 #[cfg(test)]
 use bootloader::{entry_point, BootInfo};
 
