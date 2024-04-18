@@ -6,11 +6,11 @@ use core::panic::PanicInfo;
 use lazy_static::lazy_static;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 use rust_os::interrupts::init_idt;
-use rust_os::{exit_qemu, QemuExitCode, serial_println};
+use rust_os::{exit_qemu, serial_print, serial_println, QemuExitCode};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    serial_println!("stack_overflow::stack_overflow...\t");
+    serial_print!("stack_overflow::stack_overflow...\t");
 
     rust_os::gdt::init();
     init_test_idt();

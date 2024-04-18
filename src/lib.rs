@@ -69,15 +69,6 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 }
 
 #[cfg(test)]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    init();
-    test_main();
-
-    hlt_loop();
-}
-
-#[cfg(test)]
 #[panic_handler]
 fn panic(info : &PanicInfo) -> ! {
     test_panic_handler(info)
