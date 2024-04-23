@@ -1,10 +1,39 @@
-use core::mem;
+use core::{
+    alloc::{GlobalAlloc, Layout},
+    mem, ptr,
+};
 
 use crate::allocator::align_up;
 
+use super::Locked;
 
+unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
+    unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+        // レイアウト調整を行う
+        let (size, align) = LinkedListAllocator::size_align(layout);
+        let mut allocator = self.lock();
 
-struct LinkedListAllocator {
+        if let Some((region, alloc_start)) = allocator.find_region(size, align) {
+            let alloc_end = alloc_start.checked_add(size).expect("overflow");
+            let excess_size = region.end_addr() - alloc_end;
+
+            if excess_size > 0 {
+                allocator.add_free_region(alloc_end, excess_size);
+            }
+            alloc_start as *mut u8
+        } else {
+            ptr::null_mut()
+        }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        // レイアウト調整を行う
+        let (size, _) = LinkedListAllocator::size_align(layout);
+        self.lock().add_free_region(ptr as usize, size);
+    }
+}
+
+pub struct LinkedListAllocator {
     head: ListNode,
 }
 
@@ -20,7 +49,7 @@ impl LinkedListAllocator {
     /// この関数は'unsafe'である。なぜなら、呼び出し元は渡すヒープ境界が
     /// 有効でヒープが未使用であることを保証しなければならないからである。
     /// このメソッドは一度しかよばれてはならない。
-    pub unsafe fn init(&mut self, heap_start:usize, heap_size: usize) {
+    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
         self.add_free_region(heap_start, heap_size);
     }
 
@@ -40,36 +69,67 @@ impl LinkedListAllocator {
 
     /// 与えられたサイズの解放された領域を探し、リストからそれを取り除く。
     /// リストノードと割り当ての開始アドレスからなるタプルを返す。
-    fn find_region(&mut self, size: usize, align: usize)
-        -> Option<(&'static mut ListNode, usize)> {
-            // 現在のリストノードへの参照。繰り返すごとに更新していく
-            let mut current = &mut self.head;
-            // 連結リストから十分大きな領域を探す
-            while let Some(ref mut region) = current.next {
-                if let Ok(alloc_start) = Self::alloc_from_region(&region, size, align) {
-                    // 領域が割り当てに適している -> リストから除く
-                    let next = region.next.take();
-                    let ret = Some((current.next.take().unwrap(), alloc_start));
-                    current.next = next;
-                    return ret;
-                } else {
-                    // 割り当てに適していない -> 次の領域へ
-                    current = current.next.as_mut().unwrap();
-                }
+    fn find_region(&mut self, size: usize, align: usize) -> Option<(&'static mut ListNode, usize)> {
+        // 現在のリストノードへの参照。繰り返すごとに更新していく
+        let mut current = &mut self.head;
+        // 連結リストから十分大きな領域を探す
+        while let Some(ref mut region) = current.next {
+            if let Ok(alloc_start) = Self::alloc_from_region(&region, size, align) {
+                // 領域が割り当てに適している -> リストから除く
+                let next = region.next.take();
+                let ret = Some((current.next.take().unwrap(), alloc_start));
+                current.next = next;
+                return ret;
+            } else {
+                // 割り当てに適していない -> 次の領域へ
+                current = current.next.as_mut().unwrap();
             }
-
-            None
         }
+
+        None
+    }
+
+    /// 与えられた領域で与えられたサイズとアラインメントの割り当てを行おうとする
+    /// 成功した場合、割り当ての開始アドレスを返す
+    fn alloc_from_region(region: &ListNode, size: usize, align: usize) -> Result<usize, ()> {
+        let alloc_start = align_up(region.start_addr(), align);
+        let alloc_end = alloc_start.checked_add(size).ok_or(())?;
+
+        if alloc_end > region.end_addr() {
+            // 領域が小さすぎる
+            return Err(());
+        }
+
+        let excess_size = region.end_addr() - alloc_end;
+        if excess_size > 0 && excess_size < mem::size_of::<ListNode>() {
+            // 領域の残りが小さすぎてListNodeを格納できない
+            // 割り当ては領域を使用部と解放部に分けるので、この条件が必要
+            return Err(());
+        }
+
+        Ok(alloc_start)
+    }
+
+    /// 与えられたレイアウトを調整し、割り当てられるメモリ領域が`ListNode`を格納することも出来るようにする
+    /// 調整されたサイズとアラインメントをタプルとして返す
+    fn size_align(layout: Layout) -> (usize, usize) {
+        let layout = layout
+            .align_to(mem::align_of::<ListNode>())
+            .expect("adjusting alignment failed")
+            .pad_to_align();
+        let size = layout.size().max(mem::size_of::<ListNode>());
+        (size, layout.align())
+    }
 }
 
 struct ListNode {
     size: usize,
-    next: Option<&'static mut ListNode>
+    next: Option<&'static mut ListNode>,
 }
 
 impl ListNode {
-    const fn new(size: usize) -> Self{
-        ListNode{
+    const fn new(size: usize) -> Self {
+        ListNode {
             size: size,
             next: None,
         }

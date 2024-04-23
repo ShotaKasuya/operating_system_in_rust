@@ -1,22 +1,24 @@
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
 use linked_list_allocator::LockedHeap;
+use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::Page;
 use x86_64::structures::paging::{FrameAllocator, Mapper, PageTableFlags, Size4KiB};
-use x86_64::structures::paging::mapper::MapToError;
 use x86_64::VirtAddr;
 
 use self::bump::BumpAllocator;
+use self::linked_list::LinkedListAllocator;
 
 pub mod bump;
 pub mod linked_list;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
-pub const HEAP_SIZE: usize = 100 * 1024;    // 100KiB
+pub const HEAP_SIZE: usize = 100 * 1024; // 100KiB
 
 #[global_allocator]
 // static ALLOCATOR: LockedHeap = LockedHeap::empty();
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+// static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
@@ -52,13 +54,13 @@ pub struct Locked<A> {
 }
 
 impl<A> Locked<A> {
-    pub const fn new(inner: A)->Self{
-        Locked{
-            inner:spin::Mutex::new(inner)
+    pub const fn new(inner: A) -> Self {
+        Locked {
+            inner: spin::Mutex::new(inner),
         }
     }
 
-    pub fn lock(&self)->spin::MutexGuard<A> {
+    pub fn lock(&self) -> spin::MutexGuard<A> {
         self.inner.lock()
     }
 }
@@ -66,8 +68,14 @@ impl<A> Locked<A> {
 /// 与えられた'addr'を'align'に上丸めする
 /// 'align'は2の累乗出なければならない
 /// https://os.phil-opp.com/allocator-designs/ja/
-fn align_up(addr: usize, align: usize) ->usize {
-    (addr+align-1) & !(align-1)
+/// let remainder = addr % align;
+/// if remainder == 0 {
+///     addr // addr はすでに丸められていた
+/// } else {
+///     addr - remainder + align
+/// }
+fn align_up(addr: usize, align: usize) -> usize {
+    (addr + align - 1) & !(align - 1)
 }
 
 pub struct Dummy;
