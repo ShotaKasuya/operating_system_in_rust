@@ -46,7 +46,7 @@ impl LinkedListAllocator {
     }
 
     /// 与えられたヒープ領域でアロケータを初期化する。
-    /// この関数は'unsafe'である。なぜなら、呼び出し元は渡すヒープ境界が
+    /// この関数は`unsafe`である。なぜなら、呼び出し元は渡すヒープ境界が
     /// 有効でヒープが未使用であることを保証しなければならないからである。
     /// このメソッドは一度しかよばれてはならない。
     pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
