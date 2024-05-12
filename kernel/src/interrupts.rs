@@ -2,7 +2,6 @@ use crate::gdt;
 use crate::{hlt_loop, print, println};
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
-use spin::Mutex;
 use x86_64::instructions::port::Port;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
@@ -45,7 +44,6 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 
     let mut port = Port::new(0x60);
     let scancode: u8 = unsafe { port.read() };
