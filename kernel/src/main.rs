@@ -12,31 +12,29 @@ use core::panic::PanicInfo;
 // use kernel::memory::BootInfoFrameAllocator;
 // use kernel::task::simple_executor::SimpleExecutor;
 // use kernel::task::{keyboard, Task};
-use kernel::{println};
 use kernel::display::{Display, PixelColor};
+use kernel::println;
 
 
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    // use kernel::allocator;
-    // use kernel::memory;
-    // use x86_64::structures::paging::Page;
-    // use x86_64::VirtAddr;
 
     let BootInfo {
         framebuffer,
         ..
     } = boot_info;
 
-    let frame_buffer_info = framebuffer.as_ref().unwrap().info().clone();
+    let frame_buffer_info = framebuffer.as_ref().unwrap().info();
 
     let mut display = Display::new(framebuffer.as_mut().unwrap().buffer_mut(), frame_buffer_info);
-    for x in 0..200 {
-        for y in 0..100 {
-            display.write_pixel(x, y, &PixelColor::new(0, 255, 0));
+    for y in 0..display.info.height {
+        for x in 0..display.info.width {
+            display.write_pixel(x, y, &PixelColor::new(0, 0, 255));
         }
     }
+    
+    display.print_cursor(0, 0);
 
     // for (index, buf) in boot_info.framebuffer.as_mut().unwrap().buffer_mut().iter_mut().enumerate() {
     //     *buf = (index % 256) as u8;
