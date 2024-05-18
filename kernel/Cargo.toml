@@ -36,10 +36,15 @@ version = "0.3.4"
 default-features = false
 features = ["alloc"]
 
-[package.metadata.bootimage]
-test-args=["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-display", "none"]
-test-success-exit-code = 33
-test-timeout = 300
+[dependencies.noto-sans-mono-bitmap]
+version = "0.3.0"
+default-features = false
+features = [
+    "regular",
+    "size_16",
+    "unicode-basic-latin",
+    "unicode-specials",
+]
 
 [[test]]
 name = "should_panic"

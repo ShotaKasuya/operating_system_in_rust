@@ -8,6 +8,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::alloc::Layout;
+use bootloader_api::BootInfo;
 
 #[cfg(test)]
 use bootloader_api::{entry_point, BootInfo};
@@ -16,30 +17,38 @@ use bootloader_api::{entry_point, BootInfo};
 entry_point!(test_kernel_main);
 
 #[cfg(test)]
-fn test_kernel_main(_boot_info: &'static mut BootInfo) -> ! {
-    init();
+fn test_kernel_main(boot_info: &'static mut BootInfo) -> ! {
+    init(boot_info);
     test_main();
     hlt_loop();
 }
 
 extern crate alloc;
-pub mod vga_buffer;
+
 pub mod serial;
 pub mod interrupts;
 pub mod gdt;
 pub mod memory;
 pub mod allocator;
 pub mod task;
-pub mod display;
+pub mod frame_buffer_writer;
 
 use core::panic::PanicInfo;
+use crate::frame_buffer_writer::{FRAME_BUFFER_WRITER};
 
 
-pub fn init() {
-    gdt::init();
-    interrupts::init_idt();
-    unsafe { interrupts::PICS.lock().initialize() };
-    x86_64::instructions::interrupts::enable();
+pub fn init(boot_info: &'static mut BootInfo) {
+    let BootInfo {
+        framebuffer,
+        ..
+    } = boot_info;
+
+    let frame_buffer_info = framebuffer.as_ref().unwrap().info();
+    FRAME_BUFFER_WRITER.lock().init(framebuffer.as_mut().unwrap().buffer_mut(), frame_buffer_info);
+    // gdt::init();
+    // interrupts::init_idt();
+    // unsafe { interrupts::PICS.lock().initialize() };
+    // x86_64::instructions::interrupts::enable();
 }
 
 
@@ -73,7 +82,7 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 
 #[cfg(test)]
 #[panic_handler]
-fn panic(info : &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
     test_panic_handler(info)
 }
 
