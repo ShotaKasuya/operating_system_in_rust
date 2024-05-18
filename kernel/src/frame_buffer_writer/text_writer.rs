@@ -5,9 +5,11 @@ use crate::frame_buffer_writer::{FRAME_BUFFER_WRITER, FrameBufferWriter};
 use crate::frame_buffer_writer::pixel_color::PixelColor;
 use crate::frame_buffer_writer::text_writer::font_constants::BACKUP_CHAR;
 
-// TODO: わかりやすいコメント
+// 行と行の間
 const LINE_SPACING: usize = 2;
+// 文字と文字の間
 const LETTER_SPACING: usize = 0;
+// 画面端からの距離
 const BORDER_PADDING: usize = 1;
 
 mod font_constants {
@@ -16,7 +18,7 @@ mod font_constants {
     pub const CHAR_RASTER_HEIGHT: RasterHeight = RasterHeight::Size16;
     pub const CHAR_RASTER_WIDTH: usize = get_raster_width(FontWeight::Regular, CHAR_RASTER_HEIGHT);
     pub const BACKUP_CHAR: char = '�';
-    pub const FONT_WEIGHT: FontWeight = FontWeight::Regular;
+    pub const FONT_WEIGHT: FontWeight = FontWeight::Regular;    // 文字の太さ: 普通
 }
 
 #[macro_export]
