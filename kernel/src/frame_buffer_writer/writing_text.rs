@@ -3,7 +3,8 @@ use core::fmt::Write;
 use noto_sans_mono_bitmap::{get_raster, RasterizedChar};
 use crate::frame_buffer_writer::{FRAME_BUFFER_WRITER, FrameBufferWriter};
 use crate::frame_buffer_writer::pixel_color::PixelColor;
-use crate::frame_buffer_writer::text_writer::font_constants::BACKUP_CHAR;
+use crate::frame_buffer_writer::vector2d::Vector2D;
+use crate::frame_buffer_writer::writing_text::font_constants::BACKUP_CHAR;
 
 // 行と行の間
 const LINE_SPACING: usize = 2;
@@ -23,7 +24,7 @@ mod font_constants {
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => {($crate::frame_buffer_writer::text_writer::_print(format_args!($($arg)*)))};
+    ($($arg:tt)*) => {($crate::frame_buffer_writer::writing_text::_print(format_args!($($arg)*)))};
 }
 #[macro_export]
 macro_rules! println {
@@ -93,7 +94,7 @@ impl FrameBufferWriter {
     fn write_rendered_char(&mut self, rendered_char: RasterizedChar) {
         for (y, row) in rendered_char.raster().iter().enumerate() {
             for (x, byte) in row.iter().enumerate() {
-                self.write_pixel(self.x_pos + x, self.y_pos + y, &PixelColor::byte_to_color(*byte));
+                self.write_pixel(Vector2D { x: self.x_pos + x, y: self.y_pos + y }, &PixelColor::byte_to_color(*byte));
             }
         }
         self.x_pos += rendered_char.width() + LETTER_SPACING;

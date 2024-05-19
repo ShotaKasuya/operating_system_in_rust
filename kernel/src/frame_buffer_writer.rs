@@ -3,9 +3,12 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use crate::frame_buffer_writer::cursor::MOUSE_CURSOR_SHAPE;
 use crate::frame_buffer_writer::pixel_color::PixelColor;
+use crate::frame_buffer_writer::vector2d::Vector2D;
 
 pub mod cursor;
-pub mod text_writer;
+pub mod writing_text;
+pub mod writing_shapes;
+pub mod vector2d;
 pub mod pixel_color;
 
 lazy_static! {
@@ -44,12 +47,13 @@ impl FrameBufferWriter {
         self.clear();
     }
 
+    #[doc(hidden)]
     fn write_framebuffer(&mut self, pos: usize, value: u8) {
         self.framebuffer.as_mut().unwrap()[pos] = value
     }
 
-    fn write_pixel(&mut self, x: usize, y: usize, color: &PixelColor) -> bool {
-        let pixel_position = x + self.info.stride * y;
+    fn write_pixel(&mut self, pos: Vector2D<usize>, color: &PixelColor) -> bool {
+        let pixel_position = pos.x + self.info.stride * pos.y;
         let byte_position = pixel_position * self.info.bytes_per_pixel;
         match self.info.pixel_format {
             PixelFormat::Rgb => {
@@ -68,15 +72,15 @@ impl FrameBufferWriter {
         }
     }
 
-    pub fn print_cursor(&mut self, pos_x: usize, pos_y: usize) {
+    pub fn print_cursor(&mut self, pos: Vector2D<usize>) {
         for (y, mouse_cursor_sh) in MOUSE_CURSOR_SHAPE.iter().enumerate() {
             for (x, mouse_cursor_sh) in mouse_cursor_sh.iter().enumerate() {
                 match mouse_cursor_sh {
                     b'@' => {
-                        self.write_pixel(pos_x + x, pos_y + y, &PixelColor::new(0, 0, 0));
+                        self.write_pixel(pos + Vector2D::new(x, y), &PixelColor::new(0, 0, 0));
                     }
                     b'.' => {
-                        self.write_pixel(pos_x + x, pos_y + y, &PixelColor::new(255, 255, 255));
+                        self.write_pixel(pos + Vector2D::new(x, y), &PixelColor::new(255, 255, 255));
                     }
                     _ => {}
                 }
