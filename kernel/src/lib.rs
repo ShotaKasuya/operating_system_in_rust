@@ -11,7 +11,7 @@ use core::alloc::Layout;
 use bootloader_api::BootInfo;
 
 #[cfg(test)]
-use bootloader_api::{entry_point, BootInfo};
+use bootloader_api::{entry_point};
 
 #[cfg(test)]
 entry_point!(test_kernel_main);
@@ -25,6 +25,7 @@ fn test_kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
 extern crate alloc;
 
+pub mod pci;
 pub mod serial;
 pub mod interrupts;
 pub mod gdt;
