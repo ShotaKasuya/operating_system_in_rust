@@ -26,7 +26,7 @@ fn test_kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
 extern crate alloc;
 
-pub mod pci;
+pub mod usb;
 pub mod serial;
 pub mod interrupts;
 pub mod gdt;

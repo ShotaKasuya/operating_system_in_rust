@@ -1,9 +1,14 @@
+mod device;
+mod error;
+mod xhci;
+
 use core::arch::asm;
-use core::error;
 use core::error::Error;
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt::{Debug, Display};
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::usb::device::Device;
+use crate::usb::error::PciError;
 
 lazy_static! {
     pub static ref DEVICES:Mutex<Devices> = Mutex::new(Devices::default());
@@ -14,16 +19,8 @@ pub struct Devices {
     pub num: usize,
 }
 
-#[derive(Default, Debug)]
-pub struct Device {
-    bus: u8,
-    device: u8,
-    function: u8,
-    header_type: u8,
-}
-
-pub enum PciError {
-    Full
+pub const fn calc_bar_address(bar_index: usize) -> u8 {
+    (0x10 + 4 * bar_index) as u8
 }
 
 pub fn scan_all_bus() -> Result<(), PciError> {
@@ -109,23 +106,12 @@ impl Devices {
     }
 }
 
-impl Device {
-    fn new(bus: u8, device: u8, function: u8, header_type: u8) -> Self {
-        Self {
-            bus,
-            device,
-            function,
-            header_type,
-        }
-    }
-}
-
 // CONFIG_ADDRESSレジスタのIOポートアドレス
 const K_CONFIG_ADDRESS: u16 = 0x0CF8;
 // CONFIG_DATAレジスタ
 const K_CONFIG_DATA: u16 = 0x0CFC;
 
-fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
+const fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
     let shl = |x: u8, bits: usize| -> u32 {
         (x as u32) << bits
     };
@@ -133,44 +119,44 @@ fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
     shl(1, 31) | shl(bus, 16) | shl(device, 11) | shl(function, 8) | (reg_addr & 0xFC) as u32
 }
 
-pub fn write_address(addr: u32) {
+const fn write_address(addr: u32) {
     io_out32(K_CONFIG_ADDRESS, addr);
 }
 
-pub fn write_data(value: u32) {
+const fn write_data(value: u32) {
     io_out32(K_CONFIG_DATA, value);
 }
 
-pub fn read_data() -> u32 {
+const fn read_data() -> u32 {
     io_in32(K_CONFIG_DATA)
 }
 
-pub fn read_device_id(bus: u8, device: u8, function: u8) -> u16 {
+const fn read_device_id(bus: u8, device: u8, function: u8) -> u16 {
     write_address(make_address(bus, device, function, 0x00));
     (read_data() >> 16) as u16
 }
 
-pub fn read_class_code(bus: u8, device: u8, function: u8) -> u32 {
+const fn read_class_code(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x0C));
     read_data()
 }
 
-pub fn read_header_type(bus: u8, device: u8, function: u8) -> u8 {
+const fn read_header_type(bus: u8, device: u8, function: u8) -> u8 {
     write_address(make_address(bus, device, function, 0x0C));
     ((read_data() >> 16) & 0xFF) as u8
 }
 
-pub fn read_vendor_id(bus: u8, device: u8, function: u8) -> u32 {
+const fn read_vendor_id(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x00));
     read_data() & 0xFFFF
 }
 
-pub fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
+const fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x18));
     read_data()
 }
 
-fn is_single_function_device(header_type: u8) -> bool {
+const fn is_single_function_device(header_type: u8) -> bool {
     (header_type & 0x80) == 0
 }
 
@@ -189,28 +175,4 @@ fn io_in32(addr: u16) -> u32 {
         asm!("in {0:e}, dx", out(reg) ret);
     }
     ret
-}
-
-impl Debug for PciError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.description())
-    }
-}
-
-impl Display for PciError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.description())
-    }
-}
-
-impl error::Error for PciError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
-
-impl PciError {
-    fn description(&self) -> &'static str {
-        match self { PciError::Full => "PCI Device is Full" }
-    }
 }
