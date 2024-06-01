@@ -13,6 +13,7 @@ use kernel::{init, println};
 use kernel::frame_buffer_writer::FRAME_BUFFER_WRITER;
 use kernel::frame_buffer_writer::pixel_color::PixelColor;
 use kernel::frame_buffer_writer::vector2d::Vector2D;
+use kernel::pci::{DEVICES, scan_all_bus};
 
 
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
@@ -32,6 +33,16 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     println!("Hello World{}", "!");
 
+    if let Err(err) = scan_all_bus() {
+        println!("Error: {:?}", err);
+    }
+    println!("Scan all Bus Success");
+    {
+        let devices = DEVICES.lock();
+        for i in 0..devices.num {
+            println!("{:?}", devices.devices[i]);
+        }
+    }
     #[cfg(test)]
     test_main();
 
