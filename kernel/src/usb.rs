@@ -1,10 +1,9 @@
-mod device;
+pub mod device;
 mod error;
 mod xhci;
 
 use core::arch::asm;
-use core::error::Error;
-use core::fmt::{Debug, Display};
+use core::fmt::{Debug};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use crate::usb::device::Device;
@@ -28,7 +27,7 @@ pub fn scan_all_bus() -> Result<(), PciError> {
 
     let header_type = read_header_type(0, 0, 0);
     if is_single_function_device(header_type) {
-        scan_bus(0)?;
+        return scan_bus(0);
     }
 
     for function in 1..8 {
@@ -111,7 +110,7 @@ const K_CONFIG_ADDRESS: u16 = 0x0CF8;
 // CONFIG_DATAレジスタ
 const K_CONFIG_DATA: u16 = 0x0CFC;
 
-const fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
+fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
     let shl = |x: u8, bits: usize| -> u32 {
         (x as u32) << bits
     };
@@ -119,44 +118,44 @@ const fn make_address(bus: u8, device: u8, function: u8, reg_addr: u8) -> u32 {
     shl(1, 31) | shl(bus, 16) | shl(device, 11) | shl(function, 8) | (reg_addr & 0xFC) as u32
 }
 
-const fn write_address(addr: u32) {
+fn write_address(addr: u32) {
     io_out32(K_CONFIG_ADDRESS, addr);
 }
 
-const fn write_data(value: u32) {
+fn write_data(value: u32) {
     io_out32(K_CONFIG_DATA, value);
 }
 
-const fn read_data() -> u32 {
+fn read_data() -> u32 {
     io_in32(K_CONFIG_DATA)
 }
 
-const fn read_device_id(bus: u8, device: u8, function: u8) -> u16 {
+fn read_device_id(bus: u8, device: u8, function: u8) -> u16 {
     write_address(make_address(bus, device, function, 0x00));
     (read_data() >> 16) as u16
 }
 
-const fn read_class_code(bus: u8, device: u8, function: u8) -> u32 {
+fn read_class_code(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x0C));
     read_data()
 }
 
-const fn read_header_type(bus: u8, device: u8, function: u8) -> u8 {
+fn read_header_type(bus: u8, device: u8, function: u8) -> u8 {
     write_address(make_address(bus, device, function, 0x0C));
     ((read_data() >> 16) & 0xFF) as u8
 }
 
-const fn read_vendor_id(bus: u8, device: u8, function: u8) -> u32 {
+fn read_vendor_id(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x00));
     read_data() & 0xFFFF
 }
 
-const fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
+fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
     write_address(make_address(bus, device, function, 0x18));
     read_data()
 }
 
-const fn is_single_function_device(header_type: u8) -> bool {
+fn is_single_function_device(header_type: u8) -> bool {
     (header_type & 0x80) == 0
 }
 

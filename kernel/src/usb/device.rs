@@ -34,7 +34,7 @@ impl Device {
             return None;
         }
         let addr = calc_bar_address(bar_index);
-        let bar  = self.read_conf_reg(addr);
+        let bar = self.read_conf_reg(addr);
 
         // 32bit address
         if (bar & 0b0100) == 0 {
@@ -42,19 +42,19 @@ impl Device {
         }
 
         // 64bit address
-        if bar_index>=0b0101 {
+        if bar_index >= 0b0101 {
             return None;
         }
 
-        let bar_upper = self.read_conf_reg(addr+4);
-        Some((bar | bar_upper << 32) as u64)
+        let bar_upper = self.read_conf_reg(addr + 4) as u64;
+        Some((bar as u64) | bar_upper << 32)
     }
 
     pub fn read_vendor_id(&self) -> u32 {
         read_vendor_id(self.bus, self.device, self.function)
     }
-    pub fn read_conf_reg(&self, reg_addr:u8)->u32{
-        write_address(make_address(self.bus, self.device,self.function,reg_addr));
+    pub fn read_conf_reg(&self, reg_addr: u8) -> u32 {
+        write_address(make_address(self.bus, self.device, self.function, reg_addr));
         read_data()
     }
 }
@@ -72,7 +72,7 @@ impl ClassCode {
         self.base == base
     }
     pub fn equal_bs(&self, base: u8, sub: u8) -> bool {
-        self.equal(base) && self.sub == sub
+        self.equal_b(base) && self.sub == sub
     }
     pub fn equal_bsi(&self, base: u8, sub: u8, interface: u8) -> bool {
         self.equal_bs(base, sub) && self.interface == interface

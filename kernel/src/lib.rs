@@ -34,6 +34,7 @@ pub mod memory;
 pub mod allocator;
 pub mod task;
 pub mod frame_buffer_writer;
+pub mod register;
 
 use core::panic::PanicInfo;
 use crate::frame_buffer_writer::{FRAME_BUFFER_WRITER};
