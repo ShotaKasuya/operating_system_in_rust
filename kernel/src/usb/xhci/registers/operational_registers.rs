@@ -13,3 +13,18 @@ pub struct OperationalRegisters {
     config: u32,                // Configure
 }
 
+struct USBCommandRegister {
+    data: u32,
+}
+impl USBCommandRegister {
+    fn r_run_stop(&self) ->bool{
+        (self.data&0x01)!=0
+    }
+    fn w_run_stop(&mut self, bit: bool){
+        self.data = if bit {
+            self.data | 0x0001
+        } else {
+            self.data & 0xFFFE
+        };
+    }
+}
