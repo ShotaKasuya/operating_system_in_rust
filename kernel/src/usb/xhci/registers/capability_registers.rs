@@ -365,15 +365,15 @@ impl Mmio<CapabilityRegisters> {
     pub fn read_dboff(&self) -> u32 {
         unsafe {
             ptr::read_volatile(
-                &self.registers().dboff
-            )
+                &self.registers()
+            ).dboff
         }
     }
     pub fn read_rts_off(&self) -> u32 {
         unsafe {
             ptr::read_volatile(
-                &self.registers().rtsoff
-            )
+                &self.registers()
+            ).rtsoff
         }
     }
 
