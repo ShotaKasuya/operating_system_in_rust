@@ -1,14 +1,18 @@
 use crate::usb::xhci::registers::{VolatileRead, VolatileWrite};
+use crate::usb::xhci::registers::operational_registers::command_ring_control_register::CommandRingControlRegister;
+
+pub mod command_ring_control_register;
+mod device_context_base_array_pointer;
 
 /// xHCI 規格書 5.4参照
 #[repr(C, align(32))]
 pub struct OperationalRegisters {
     usbcmd: USBCommandRegister, // USB Command
     usbsts: USBStatusRegister,  // USB Status
-    pagesize: u32,              // Page Size
-    reserved1: [u8; 8],
-    dnctrl: u32, // Device Notification Control
-    crcr: u8,    // Command Ring Control
+    pagesize: PageSizeRegister,              // Page Size
+    reserved1: [u32; 2],
+    dnctrl: DeviceNotificationControlRegister, // Device Notification Control
+    crcr: CommandRingControlRegister,    // Command Ring Control
     reserved2: [u8; 0x10],
     dcbaap: u64, // Device Context Base Address Array Pointer
     config: u32, // Configure
@@ -232,9 +236,4 @@ impl VolatileWrite for DeviceNotificationControlRegister {
     fn get_data_mut(&mut self) -> &mut u32 {
         &mut self.data
     }
-}
-#[repr(C, align(32))]
-struct CommandRingControlRegister {
-    low_bit:u32,
-    high_bit:u32,
 }
