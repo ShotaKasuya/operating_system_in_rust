@@ -1,10 +1,10 @@
-use crate::usb::xhci::registers::VolatileAccess;
+use crate::usb::xhci::registers::{VolatileRead, VolatileWrite};
 
 /// xHCI 規格書 5.4参照
 #[repr(C, align(32))]
 pub struct OperationalRegisters {
     usbcmd: USBCommandRegister, // USB Command
-    usbsts: u32,                // USB Status
+    usbsts: USBStatusRegister,  // USB Status
     pagesize: u32,              // Page Size
     reserved1: [u8; 8],
     dnctrl: u32, // Device Notification Control
@@ -18,6 +18,7 @@ pub struct OperationalRegisters {
 struct USBCommandRegister {
     data: u32,
 }
+
 const RUN_STOP: usize = 0;
 const HOST_CONTROLLER_RESET: usize = 1;
 const INTERRUPTER_ENABLE: usize = 2;
@@ -31,15 +32,19 @@ const CEM_ENABLE: usize = 13;
 const EXTENDED_TBC_ENABLE: usize = 14;
 const EXTENDED_TBC_TRB_STATUS_ENABLE: usize = 15;
 const VTIO_ENABLE: usize = 16;
-impl VolatileAccess for USBCommandRegister {
+
+impl VolatileRead for USBCommandRegister {
     fn get_data(&self) -> &u32 {
         &self.data
     }
+}
 
+impl VolatileWrite for USBCommandRegister {
     fn get_data_mut(&mut self) -> &mut u32 {
         &mut self.data
     }
 }
+
 impl USBCommandRegister {
     fn r_run_stop(&self) -> bool {
         self.read_bit(RUN_STOP)
@@ -116,10 +121,12 @@ impl USBCommandRegister {
         self.write_bit(bit, VTIO_ENABLE);
     }
 }
+
 #[repr(C, align(32))]
 struct USBStatusRegister {
     data: u32,
 }
+
 const HCH_HALTED: usize = 0;
 const HOST_SYSTEM_ERROR: usize = 2;
 const EVENT_INTERRUPT: usize = 3;
@@ -129,15 +136,19 @@ const RESTORE_STATE_STATUS: usize = 9;
 const SAVE_RESTORE_ERROR: usize = 10;
 const CONTROLLER_NOT_READY: usize = 11;
 const HOST_CONTROLLER_ERROR: usize = 12;
-impl VolatileAccess for USBStatusRegister {
+
+impl VolatileRead for USBStatusRegister {
     fn get_data(&self) -> &u32 {
         &self.data
     }
+}
 
+impl VolatileWrite for USBStatusRegister {
     fn get_data_mut(&mut self) -> &mut u32 {
         &mut self.data
     }
 }
+
 impl USBStatusRegister {
     fn r_hch_halted(&self) -> bool {
         self.read_bit(HCH_HALTED)
@@ -188,4 +199,42 @@ impl USBStatusRegister {
     fn w_host_controller_error(&mut self, bit: bool) {
         self.write_bit(bit, HOST_CONTROLLER_ERROR);
     }
+}
+
+#[repr(C, align(32))]
+struct PageSizeRegister {
+    data: u32,
+}
+
+impl VolatileRead for PageSizeRegister {
+    fn get_data(&self) -> &u32 {
+        &self.data
+    }
+}
+
+impl PageSizeRegister {
+    fn page_size(&self) -> u16 {
+        (self.read() & 0xFFFF) as u16
+    }
+}
+
+#[repr(C, align(32))]
+struct DeviceNotificationControlRegister {
+    data: u32,
+}
+impl VolatileRead for DeviceNotificationControlRegister{
+    fn get_data(&self) -> &u32 {
+        &self.data
+    }
+}
+
+impl VolatileWrite for DeviceNotificationControlRegister {
+    fn get_data_mut(&mut self) -> &mut u32 {
+        &mut self.data
+    }
+}
+#[repr(C, align(32))]
+struct CommandRingControlRegister {
+    low_bit:u32,
+    high_bit:u32,
 }

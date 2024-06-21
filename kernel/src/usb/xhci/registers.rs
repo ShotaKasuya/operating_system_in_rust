@@ -12,10 +12,10 @@ pub struct Mmio<T> {
 }
 
 impl<T> Mmio<T> {
-    pub fn new(addr: usize)->Self{
-        Self{
-            base_address:addr,
-            phantom:PhantomData::default()
+    pub fn new(addr: usize) -> Self {
+        Self {
+            base_address: addr,
+            phantom: PhantomData::default(),
         }
     }
     pub fn registers(&self) -> &T {
@@ -31,23 +31,26 @@ impl<T> Mmio<T> {
     }
 }
 
-trait VolatileAccess{
+trait VolatileRead {
     fn get_data(&self) -> &u32;
-    fn get_data_mut(&mut self) -> &mut u32;
 
     fn read(&self) -> u32 {
         unsafe { ptr::read_volatile(self.get_data()) }
-    }
-
-    fn write(&mut self, data: u32) {
-        unsafe { ptr::write_volatile(self.get_data_mut(), data) }
     }
 
     fn read_bit(&self, position: usize) -> bool {
         let mask: u32 = 1 << position;
         (self.read() & mask) != 0
     }
+}
 
+trait VolatileWrite:VolatileRead {
+    fn get_data_mut(&mut self) -> &mut u32;
+
+    fn write(&mut self, data: u32) {
+        unsafe { ptr::write_volatile(self.get_data_mut(), data) }
+    }
+    
     fn write_bit(&mut self, on_off: bool, position: usize) {
         let mask: u32 = 1 << position;
         if on_off {
@@ -56,8 +59,8 @@ trait VolatileAccess{
             unsafe { ptr::write_volatile(self.get_data_mut(), (!mask) & self.read()) }
         }
     }
-
 }
+
 
 #[repr(C, packed)]
 pub struct PortRegisters {
