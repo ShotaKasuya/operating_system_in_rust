@@ -2,7 +2,8 @@ use crate::usb::xhci::registers::{VolatileRead, VolatileWrite};
 use crate::usb::xhci::registers::operational_registers::command_ring_control_register::CommandRingControlRegister;
 
 pub mod command_ring_control_register;
-mod device_context_base_array_pointer;
+pub mod device_context_base_address_array_pointer_register;
+mod configure_register;
 
 /// xHCI 規格書 5.4参照
 #[repr(C, align(32))]
