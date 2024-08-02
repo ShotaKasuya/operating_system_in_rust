@@ -1,4 +1,6 @@
-use crate::usb::{calc_bar_address, make_address, read_class_code, read_data, read_vendor_id, write_address};
+use crate::usb::{
+    calc_bar_address, make_address, read_class_code, read_data, read_vendor_id, write_address,
+};
 
 #[derive(Default, Debug, Copy, Clone)]
 pub struct Device {
@@ -9,7 +11,7 @@ pub struct Device {
     pub class_code: ClassCode,
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ClassCode {
     base: u8,
     sub: u8,
@@ -24,7 +26,7 @@ impl Device {
             device,
             function,
             header_type,
-            class_code: ClassCode::new(class_code),
+            class_code: ClassCode::from(class_code),
         }
     }
 
@@ -62,12 +64,13 @@ impl Device {
     }
 }
 
+
 impl ClassCode {
-    fn new(class_code: u32) -> Self {
+    pub fn new(base: u8, sub: u8, interface: u8) -> Self {
         Self {
-            base: ((class_code >> 24) & 0xFF) as u8,
-            sub: ((class_code >> 16) & 0xFF) as u8,
-            interface: ((class_code >> 8) & 0xFF) as u8,
+            base,
+            sub,
+            interface,
         }
     }
 
@@ -80,4 +83,28 @@ impl ClassCode {
     pub fn equal_bsi(&self, base: u8, sub: u8, interface: u8) -> bool {
         self.equal_bs(base, sub) && self.interface == interface
     }
+}
+
+impl From<u32> for ClassCode {
+    fn from(value: u32) -> Self {
+        Self::new(
+            ((value >> 24) & 0xFF) as u8,
+            ((value >> 16) & 0xFF) as u8,
+            ((value >> 8) & 0xFF) as u8,
+        )
+    }
+}
+
+impl From<ClassCode> for u32 {
+    fn from(value: ClassCode) -> Self {
+        ((value.base as u32) << 24) | ((value.sub as u32) << 16) | ((value.interface as u32) << 8)
+    }
+}
+
+#[test]
+fn class_code_from_test() {
+    let class_code = ClassCode::from(1010);
+    let casted_class_code = u32::from(class_code);
+
+    assert_eq!(class_code, ClassCode::from(casted_class_code), "From implementation is wrong");
 }

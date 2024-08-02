@@ -9,17 +9,18 @@ extern crate alloc;
 use bootloader_api::config::{BootloaderConfig, Mapping};
 use bootloader_api::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use kernel::{init, println};
+use kernel::{init, println, serial_println};
 use kernel::frame_buffer_writer::FRAME_BUFFER_WRITER;
 use kernel::frame_buffer_writer::pixel_color::PixelColor;
 use kernel::frame_buffer_writer::vector2d::Vector2D;
 use kernel::usb::{DEVICES, scan_all_bus};
-use kernel::usb::device::Device;
+use kernel::usb::device::{ClassCode, Device};
 
 
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
+    serial_println!("Hello World");
     init(boot_info);
     {
         let mut writer = FRAME_BUFFER_WRITER.lock();
@@ -39,33 +40,33 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     }
     println!("Scan all Bus Success");
     {
-        // let devices = DEVICES.lock();
-        // for i in 0..devices.num {
-        //     let device = &devices.devices[i];
-        //     println!("{}.{}.{}: vend {:04X}, class {:08X}, head {:02X}",
-        //     device.bus, device.device, device.function,
-        //     device.read_vendor_id(), device.read_class_code(), device.header_type);
-        // }
-        // let mut xhc_dev: Option<&Device> = None;
-        // for i in 0..devices.num {
-        //     if [0x0C, 0x03, 0x30].contains(&devices.devices[i].read_class_code()) {
-        //         xhc_dev = Some(&devices.devices[i]);
-        //
-        //         if 0x8086 == xhc_dev.unwrap().read_vendor_id() {
-        //             break;
-        //         }
-        //     }
-        // }
-        //
-        // if let Some(xhc_dev) = xhc_dev {
-        //     println!("xHC has been found: {}.{}.{}",
-        //     xhc_dev.bus, xhc_dev.device, xhc_dev.function);
-        // }
-        //
-        // let xhc_bar = xhc_dev.unwrap().read_bar(0).unwrap();
-        // println!("read_bar: {}", xhc_bar);
-        // let xhc_mmio_base = xhc_bar & !0xFu64;
-        // println!("xHC mmio_base = {:08}",xhc_mmio_base);
+        let devices = DEVICES.lock();
+        for i in 0..devices.num {
+            let device = &devices.devices[i];
+            println!("{}.{}.{}: vend {:04X}, class {:08X}, head {:02X}",
+            device.bus, device.device, device.function,
+            device.read_vendor_id(), u32::from(device.read_class_code()), device.header_type);
+        }
+        let mut xhc_dev: Option<&Device> = None;
+        for i in 0..devices.num {
+            if ClassCode::new(0x0C, 0x03, 0x30) == devices.devices[i].read_class_code() {
+                xhc_dev = Some(&devices.devices[i]);
+
+                if 0x8086 == xhc_dev.unwrap().read_vendor_id() {
+                    break;
+                }
+            }
+        }
+
+        if let Some(xhc_dev) = xhc_dev {
+            println!("xHC has been found: {}.{}.{}",
+            xhc_dev.bus, xhc_dev.device, xhc_dev.function);
+        }
+
+        let xhc_bar = xhc_dev.unwrap().read_bar(0).unwrap();
+        println!("read_bar: {}", xhc_bar);
+        let xhc_mmio_base = xhc_bar & !0xFu64;
+        println!("xHC mmio_base = {:08}",xhc_mmio_base);
     }
 
 
