@@ -1,6 +1,5 @@
 pub mod device;
 mod error;
-mod xhci;
 
 use core::arch::asm;
 use core::fmt::{Debug};
@@ -67,7 +66,7 @@ fn scan_device(bus: u8, device: u8) -> Result<(), PciError> {
 fn scan_function(bus: u8, device: u8, function: u8) -> Result<(), PciError> {
     let header_type = read_header_type(bus, device, function);
     {
-        DEVICES.lock().add_device(Device::new(bus, device, function, header_type))?;
+        DEVICES.lock().add_device(&Device::new(bus, device, function, header_type))?;
     }
     let class_code = read_class_code(bus, device, function);
     let base = ((class_code >> 24) & 0xFF) as u8;
@@ -84,12 +83,12 @@ fn scan_function(bus: u8, device: u8, function: u8) -> Result<(), PciError> {
 }
 
 impl Devices {
-    fn add_device(&mut self, device: Device) -> Result<(), PciError> {
+    fn add_device(&mut self, device: &Device) -> Result<(), PciError> {
         if self.is_full() {
             return Err(PciError::Full);
         }
 
-        self.set_new_device(device);
+        self.set_new_device(device.clone());
         self.num += 1;
         Ok(())
     }

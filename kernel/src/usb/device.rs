@@ -1,6 +1,6 @@
 use crate::usb::{calc_bar_address, make_address, read_class_code, read_data, read_vendor_id, write_address};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct Device {
     pub bus: u8,
     pub device: u8,
@@ -9,7 +9,7 @@ pub struct Device {
     pub class_code: ClassCode,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct ClassCode {
     base: u8,
     sub: u8,
@@ -50,6 +50,9 @@ impl Device {
         Some((bar as u64) | bar_upper << 32)
     }
 
+    pub fn read_class_code(&self) -> ClassCode {
+        self.class_code
+    }
     pub fn read_vendor_id(&self) -> u32 {
         read_vendor_id(self.bus, self.device, self.function)
     }

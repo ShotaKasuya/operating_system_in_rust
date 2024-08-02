@@ -13,7 +13,8 @@ use kernel::{init, println};
 use kernel::frame_buffer_writer::FRAME_BUFFER_WRITER;
 use kernel::frame_buffer_writer::pixel_color::PixelColor;
 use kernel::frame_buffer_writer::vector2d::Vector2D;
-use kernel::usb::{scan_all_bus};
+use kernel::usb::{DEVICES, scan_all_bus};
+use kernel::usb::device::Device;
 
 
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
