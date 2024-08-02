@@ -1,6 +1,5 @@
 pub mod device;
 mod error;
-mod xhci;
 
 use core::arch::asm;
 use core::fmt::{Debug};
