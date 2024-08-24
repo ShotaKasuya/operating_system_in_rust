@@ -1,5 +1,6 @@
 pub mod device;
 mod error;
+mod controller;
 
 use core::arch::asm;
 use core::fmt::{Debug};
