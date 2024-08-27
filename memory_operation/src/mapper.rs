@@ -1,18 +1,23 @@
-use core::num::NonZeroUsize;
-use xhci::accessor::Mapper;
+use std::num::NonZeroUsize;
+use accessor::Mapper;
 
-pub struct Controller {
-}
-
+/// Temporary implementation
 pub struct MemoryMapper {
 
 }
+
 impl Mapper for MemoryMapper {
     unsafe fn map(&mut self, phys_start: usize, bytes: usize) -> NonZeroUsize {
-        todo!()
+        NonZeroUsize::new_unchecked(phys_start)
     }
 
     fn unmap(&mut self, virt_start: usize, bytes: usize) {
-        todo!()
+
+    }
+}
+
+impl MemoryMapper {
+    pub fn new() -> Self {
+        Self
     }
 }
