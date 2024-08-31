@@ -1,4 +1,4 @@
-use std::num::NonZeroUsize;
+use core::num::NonZeroUsize;
 use accessor::Mapper;
 
 /// Temporary implementation
@@ -18,6 +18,6 @@ impl Mapper for MemoryMapper {
 
 impl MemoryMapper {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
