@@ -9,7 +9,8 @@ extern crate alloc;
 use bootloader_api::config::{BootloaderConfig, Mapping};
 use bootloader_api::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use kernel::{init, println, serial_println};
+use log::debug;
+use kernel::{init, println};
 use kernel::frame_buffer_writer::FRAME_BUFFER_WRITER;
 use kernel::frame_buffer_writer::pixel_color::PixelColor;
 use kernel::frame_buffer_writer::vector2d::Vector2D;
@@ -20,7 +21,7 @@ use kernel::usb::device::{ClassCode, Device};
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    serial_println!("Hello World");
+    debug!("Hello World");
     init(boot_info);
     {
         let mut writer = FRAME_BUFFER_WRITER.lock();

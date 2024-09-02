@@ -26,7 +26,6 @@ fn test_kernel_main(boot_info: &'static mut BootInfo) -> ! {
 extern crate alloc;
 
 pub mod usb;
-pub mod serial;
 pub mod interrupts;
 pub mod gdt;
 pub mod memory;
@@ -35,6 +34,7 @@ pub mod task;
 pub mod frame_buffer_writer;
 
 use core::panic::PanicInfo;
+use log::debug;
 use crate::frame_buffer_writer::{FRAME_BUFFER_WRITER};
 
 
@@ -59,9 +59,9 @@ pub trait Testable {
 
 impl<T> Testable for T where T: Fn(), {
     fn run(&self) -> () {
-        serial_print!("{}..\t", core::any::type_name::<T>());
+        debug!("{}..\t", core::any::type_name::<T>());
         self();
-        serial_println!("[ok]");
+        debug!("[ok]");
     }
 }
 
@@ -75,8 +75,8 @@ pub fn test_runner(tests: &[&dyn Testable]) {
 }
 
 pub fn test_panic_handler(info: &PanicInfo) -> ! {
-    serial_println!("[failed]");
-    serial_println!("Error: {}", info);
+    debug!("[failed]");
+    debug!("Error: {}", info);
     exit_qemu(QemuExitCode::Failed);
     hlt_loop();
 }
@@ -116,7 +116,7 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
 
 pub fn test_start(len: usize)
 {
-    serial_println!("// ============================================================================================");
-    serial_println!("// Running {} Tests", len);
-    serial_println!("// ============================================================================================");
+    debug!("// ============================================================================================");
+    debug!("// Running {} Tests", len);
+    debug!("// ============================================================================================");
 }
