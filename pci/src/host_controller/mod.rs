@@ -27,13 +27,19 @@ where
         usbcmd.clear_interrupter_enable();
         usbcmd.clear_host_system_error_enable();
         usbcmd.clear_enable_wrap_event();
-        registers.operational.usbcmd.write_volatile(usbcmd);
         // ホストコントローラーはリセットする前に停止する必要があります
         if !registers.operational.usbsts.read_volatile().hc_halted() {
-            let mut cmd = registers.operational.usbcmd.read_volatile();
-            cmd.clear_run_stop();
-            registers.operational.usbcmd.write_volatile(cmd);
+            usbcmd.clear_run_stop();
         }
+        registers.operational.usbcmd.write_volatile(usbcmd);
+        while !registers.operational.usbsts.read_volatile().hc_halted() {}
+
+        // Reset Controller
+        let mut usbcmd = registers.operational.usbcmd.read_volatile();
+        usbcmd.set_host_controller_reset();
+        registers.operational.usbcmd.write_volatile(usbcmd);
+
+        debug!("xhci::HostController Initialize: waiting 1ms...\n");
 
         Self { registers }
     }
