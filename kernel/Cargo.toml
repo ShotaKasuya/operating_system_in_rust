@@ -49,6 +49,13 @@ features = [
     "unicode-specials",
 ]
 
+[dependencies.acpi]
+version = "4.1.1"
+features = [
+    "AcpiHandler"
+]
+
+
 [[test]]
 name = "should_panic"
 harness = false

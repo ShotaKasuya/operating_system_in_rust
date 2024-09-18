@@ -32,6 +32,8 @@ pub mod memory;
 pub mod allocator;
 pub mod task;
 pub mod frame_buffer_writer;
+pub mod serial;
+mod apic;
 
 use core::panic::PanicInfo;
 use log::debug;
@@ -46,8 +48,8 @@ pub fn init(boot_info: &'static mut BootInfo) {
 
     let frame_buffer_info = framebuffer.as_ref().unwrap().info();
     FRAME_BUFFER_WRITER.lock().init(framebuffer.as_mut().unwrap().buffer_mut(), frame_buffer_info);
-    // gdt::init();
-    // interrupts::init_idt();
+    gdt::init();
+    interrupts::init_idt();
     // unsafe { interrupts::PICS.lock().initialize() };
     // x86_64::instructions::interrupts::enable();
 }
